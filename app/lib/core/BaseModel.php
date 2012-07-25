@@ -1677,10 +1677,10 @@ class BaseModel extends BaseObject {
 	 		if (!($vn_gap_start = $qr_up->get('maxchildright'))) {
 	 			$vn_gap_start = $pa_parent_info[$vs_hier_left_fld];
 	 		}
-	 	
 			$vn_gap_end = $pa_parent_info[$vs_hier_right_fld];
 			$vn_gap_size = ($vn_gap_end - $vn_gap_start);
 			
+
 			if ($vn_gap_size < 0.00001) {
 				// rebuild hierarchical index if the current gap is not large enough to fit current record
 				$this->rebuildHierarchicalIndex($this->get($vs_hier_id_fld));
@@ -1692,11 +1692,11 @@ class BaseModel extends BaseObject {
 
 			$vn_interval_start = $vn_gap_start + ($vn_gap_size/(pow(10, $vn_scale)));
 			$vn_interval_end = $vn_interval_start + ($vn_gap_size/(pow(10, $vn_scale)));
-			
-			//print "--------------------------\n";
-			//print "GAP START={$vn_gap_start} END={$vn_gap_end} SIZE={$vn_gap_size} SCALE={$vn_scale} INC=".($vn_gap_size/(pow(10, $vn_scale)))."\n";
-			//print "INT START={$vn_interval_start} INT END={$vn_interval_end}\n";
-			//print "--------------------------\n";
+				
+			/*print "--------------------------\n";
+			print "GAP START={$vn_gap_start} END={$vn_gap_end} SIZE={$vn_gap_size} SCALE={$vn_scale} INC=".($vn_gap_size/(pow(10, $vn_scale)))."\n";
+			print "INT START={$vn_interval_start} INT END={$vn_interval_end}\n";
+			print "--------------------------\n"; exit;*/
 			return array('left' => $vn_interval_start, 'right' => $vn_interval_end);
 	 	}
 	 	return null;

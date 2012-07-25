@@ -457,7 +457,7 @@
 				$this->opo_result_context->saveContext();
 			}
  			
- 			$this->view->setVar('facet_list', $va_json_data);
+ 			$this->view->setVar('facet_list', caIntsInArrayToStrings($va_json_data));
  		
  			return $this->render('Browse/facet_hierarchy_level_json.php');
  		}
@@ -523,7 +523,7 @@
 					break;
 			}
 			
- 			$this->view->setVar('ancestors', caIntsInArrayToStrings($va_ancestors));
+ 			$this->view->setVar('ancestors', $va_ancestors);
  			return $this->render('Browse/facet_hierarchy_ancestors_json.php');
  		}
  		# -------------------------------------------------------

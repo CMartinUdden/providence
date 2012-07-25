@@ -1329,7 +1329,7 @@ class TimeExpressionParser {
 		$vs_token = trim(array_shift($this->opa_tokens));
 		$vs_token_lc = mb_strtolower($vs_token, 'UTF-8');
 		// today
-		if (in_array($vs_token_lc, $this->opo_language_settings->getList("todayDate"))) {
+	/*	if (in_array($vs_token_lc, $this->opo_language_settings->getList("todayDate"))) {
 			return array('value' => $vs_token, 'type' => TEP_TOKEN_TODAY);
 		}
 		// yesterday
@@ -1366,7 +1366,7 @@ class TimeExpressionParser {
 		}
 		if (in_array($vs_token_lc, $this->opo_language_settings->getList("autumnSeason"))) {
 			return array('value' => $vs_token, 'type' => TEP_TOKEN_SEASON_AUTUMN);
-		}
+		}*/
 
 		
 		

@@ -1097,7 +1097,6 @@
 												return null;
 												break;
 										}
-										
 										$vs_cur_table = array_shift($va_path);
 										$va_joins = array();
 										
@@ -1145,6 +1144,7 @@
 													{$vs_where_sql}";
 											//print "$vs_sql<hr>";
 											caSQLInsertIgnore($this->opo_db, "ca_browses_acc", $vs_select_sql);
+
 										} else {
 											$qr_res = $this->opo_db->query("TRUNCATE TABLE ca_browses_tmp");
 											$vs_sql = "
@@ -1303,7 +1303,7 @@
 					while($qr_res->nextRow()) {
 						$va_results[] = $qr_res->get('row_id', array('binary' => true));
 					}
-					
+						
 					$this->_dropTempTable('ca_browses_acc');
 					$this->_dropTempTable('ca_browses_tmp');
 					
@@ -2952,7 +2952,7 @@ if (!$va_facet_info['show_all_when_first_facet'] || ($this->numCriteria() > 0)) 
 					}
 				}
 			}
-			if (!is_array($va_results)) { $va_results = array(); }
+			if (!is_array($va_results)) { $va_results = array();}
 			
 			if ($po_result) {
 				$po_result->init($this->opn_browse_table_num, new WLPlugSearchEngineBrowseEngine($va_results, $this->ops_browse_table_name), array());

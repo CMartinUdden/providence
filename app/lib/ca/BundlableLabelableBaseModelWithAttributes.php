@@ -3127,7 +3127,9 @@ class BundlableLabelableBaseModelWithAttributes extends LabelableBaseModelWithAt
 				if (sizeof($pa_options['restrict_to_relationship_types'])) {
 					$va_rel_types = array();
 					foreach($pa_options['restrict_to_relationship_types'] as $vm_type) {
-						if (!$vm_type) { continue; }
+						if (!$vm_type) { 
+							continue; 
+							}
 						if (!($vn_type_id = $t_rel->getRelationshipTypeID($vs_linking_table, $vm_type))) {
 							$vn_type_id = (int)$vm_type;
 						}

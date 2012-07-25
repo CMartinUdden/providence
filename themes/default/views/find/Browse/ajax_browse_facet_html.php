@@ -35,7 +35,6 @@
 	
 	$va_types = $this->getVar('type_list');
 	$va_relationship_types = $this->getVar('relationship_type_list');
-	
 	$vb_individual_group_display = (bool)$this->getVar('individual_group_display');
 
 	$vs_grouping_field = $this->getVar('grouping');

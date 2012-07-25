@@ -320,7 +320,7 @@ require_once(__CA_LIB_DIR__."/core/Db.php");
 						//
 						// Get date/time stamp for display
 						//
-						$vs_datetime = date("n/d/Y@g:i:sa T", $va_log_entry['log_datetime']);
+						$vs_datetime = date("Y-m-d H:i:s", $va_log_entry['log_datetime']);
 						
 						//
 						// Get user name

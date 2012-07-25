@@ -57,7 +57,7 @@
 			$vo_res = $po_db->query($ps_select_sql, $va_args);
 		}
 		$va_select_res = $vo_res->getAllRows();
-		if(!is_array($va_select_res[0])){
+		if(empty($va_select_res[0])){
 			return;
 		}
 		$va_fields = array_keys($va_select_res[0]);
