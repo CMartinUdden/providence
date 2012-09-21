@@ -1059,17 +1059,6 @@ function caFileIsIncludable($ps_file) {
 
 		return trim($ps_text) ? $ps_text : $g_default_display_value;
 	}
-	function caIntsInArrayToStrings($pm_val){
-		if(is_array($pm_val)){
-			foreach($pm_val as $key => $val){
-				$pm_val[$key] = caIntsInArrayToStrings($val);
-			}
-			return $pm_val;
-		}
-		else{
-			return (string)$pm_val;
-		}
-	}
 	# ---------------------------------------
 	/**
 	  * Recursively cast ints (and other types) in array tree to strings

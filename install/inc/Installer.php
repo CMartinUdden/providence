@@ -286,7 +286,7 @@ class Installer {
 			$vo_db->query('DROP DATABASE IF EXISTS '.__CA_DB_DATABASE__);
 			$vo_db->query('CREATE DATABASE '.__CA_DB_DATABASE__);
 			$vo_db->query('USE '.__CA_DB_DATABASE__);
-		}*/
+		}
 
 		$va_ca_tables = $vo_dm->getTableNames();
 
