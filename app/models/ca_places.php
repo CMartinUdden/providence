@@ -396,14 +396,13 @@ class ca_places extends BundlableLabelableBaseModelWithAttributes implements IBu
 		$vs_sql = "
 			SELECT ca_places.place_id, ca_places.idno, ca_place_labels.*, count(*) c
 			FROM ca_places
-			INNER JOIN ca_place_labels ON ca_place_labels.place_id = ca_places.place_id
+			INNER JOIN ca_place_labels cpl ON ca_place_labels.place_id = ca_places.place_id
 			".join("\n", $va_joins)."
 			WHERE
 				(ca_place_labels.is_preferred = 1)
 				".(sizeof($va_sql_wheres) ? " AND ".join(' AND ', $va_sql_wheres) : "")."
 			GROUP BY
-				ca_place_labels.".join(', ca_place_labels.',$o_db->getFieldNamesFromTable("ca_place_labels")).", 
-				ca_places.idno, ca_places.place_id
+				ca_place_labels.label_id, ca_places.idno, cpl.".join(", cpl.", $o_db->getFieldNamesFromTable("ca_place_labels"))."
 			ORDER BY 
 				ca_place_labels.name
 		";
@@ -443,8 +442,8 @@ class ca_places extends BundlableLabelableBaseModelWithAttributes implements IBu
 			WHERE 
 				p.parent_id IS NULL and p.hierarchy_id IN (".join(',', $va_hierarchy_ids).")
 			GROUP BY
-				p.place_id, p.hierarchy_id"
-		);
+				p.place_id, p.hierarchy_id
+		");
 		while ($qr_res->nextRow()) {
 			$vn_hierarchy_id = $qr_res->get('hierarchy_id');
 			$va_place_hierarchies[$vn_hierarchy_id]['place_id'] = $qr_res->get('place_id');

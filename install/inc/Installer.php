@@ -282,7 +282,7 @@ class Installer {
 		$vo_dm = Datamodel::load();
 		$vo_db = new Db();
 		$vs_dbtype = $vo_config->get("db_type");
-		/*if (defined('__CA_ALLOW_INSTALLER_TO_OVERWRITE_EXISTING_INSTALLS__') && __CA_ALLOW_INSTALLER_TO_OVERWRITE_EXISTING_INSTALLS__ && ($this->opb_overwrite)) {
+		if (defined('__CA_ALLOW_INSTALLER_TO_OVERWRITE_EXISTING_INSTALLS__') && __CA_ALLOW_INSTALLER_TO_OVERWRITE_EXISTING_INSTALLS__ && ($this->opb_overwrite) && ($vs_dbtype != "pgsql")) {
 			$vo_db->query('DROP DATABASE IF EXISTS '.__CA_DB_DATABASE__);
 			$vo_db->query('CREATE DATABASE '.__CA_DB_DATABASE__);
 			$vo_db->query('USE '.__CA_DB_DATABASE__);

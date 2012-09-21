@@ -27,49 +27,36 @@
  */
 
 class SchemaLoader{
-	private $debug = true;
 	private $opa_mysqlstatements;
+	
 	public function __construct($ps_mysqlschemafilename){
 		if(!($this->opa_mysqlstatements = $this->getMysqlStatements($ps_mysqlschemafilename))){
 			return false;
 		}
 	}
-	private function printDebug($ps_method, $pm_debuginfo, $pb_exit = false, $pb_printstacktrace = false){
-		print "\n\n" . $ps_method . ": "; print_r($pm_debuginfo);
-		if($pb_printstacktrace){
-			print "\n" . caPrintStacktrace() . "\n";	
-		}
-
-		if($pb_exit){
-			"\nExiting ...";
-			exit;
-		}
-	}
+	
 	private function getMysqlStatements($ps_schemafilename){
 		if(!($vs_contents = file_get_contents($ps_schemafilename))){
-			if($this->debug){
-				$this->printDebug(__METHOD__, "unnable to open file ".$ps_schemafilename.".");
-			}
 			return false;
 		}
 		return explode(";", $this->removeComments($vs_contents));
 	}
+	
 	private function removeComments($ps_content){
 		return preg_replace("!/\*.*\*/!sU", "", $ps_content);
 	}
+	
 	public function getSchema($ps_driver){
 		switch($ps_driver){
 			case "pgsql":
-			case "pgsqlpdo":
 				return $this->getPostGreSQLTranslations();
 				break;
-			case "mysql":
-			case "mysqlpdo":
 			default:
 				return $this->opa_mysqlstatements;
 		}
 		
 	}
+
 	/* NB! Makes numerous assumptions about the mysql schema! */
 	private	function getPostGreSQLTranslations(){
 		$va_pgstatements = array();
@@ -102,6 +89,7 @@ class SchemaLoader{
 		}
 		return array_merge($va_pgstatements, $va_index_statements);
 	}
+
 	private function getPostGreSQLIndexStatement($ps_type, $ps_indexname, $ps_table, $ps_args){
 		$vs_name = $ps_table . "_" . $ps_indexname;
 		if(strlen($vs_name) > 62){

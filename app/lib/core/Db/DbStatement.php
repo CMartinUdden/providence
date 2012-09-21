@@ -122,10 +122,11 @@ class DbStatement extends DbBase {
 	 * @return mixed result
 	 */
 	function executeWithParamsAsArray($pa_params) {
+		global $g_db_driver;
 		$this->clearErrors();
 
-		if ($vb_res = $this->opo_db->execute($this, $this,$this->ops_sql, $pa_params)) {
-			if(preg_match("/Db_pgsql.*/", get_class($this->opo_db))){
+		if ($vb_res = $this->opo_db->execute($this, $this, $this->ops_sql, $pa_params)) {
+			if($g_db_driver == "pgsql"){
 				$this->opn_last_insert_id = $this->opo_db->getLastInsertID($this, $this->ops_sql);
 			} else{
 				$this->opn_last_insert_id = $this->opo_db->getLastInsertID($this);

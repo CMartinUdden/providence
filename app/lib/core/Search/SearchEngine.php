@@ -139,7 +139,7 @@ class SearchEngine extends SearchBase {
 		// This is useful, for example, to allow auto-wildcarding of accession numbers: if the search looks like an accession regex-wise we can append a "*"
 		//
 		$va_suffixes = $this->opo_search_config->getAssoc('search_suffixes');
-		if (is_array($va_suffixes) && sizeof($va_suffixes)) {
+		if (is_array($va_suffixes) && sizeof($va_suffixes) && (!preg_match('!"!', $ps_search))) {		// don't add suffix wildcards when quoting
 			foreach($va_suffixes as $vs_preg => $vs_suffix) {
 				if (preg_match("!{$vs_preg}!", $ps_search)) {
 					$ps_search = preg_replace("!({$vs_preg})[\*]*!", "$1{$vs_suffix}", $ps_search);
@@ -161,7 +161,7 @@ class SearchEngine extends SearchBase {
 			if (isset($pa_options['sort']) && $pa_options['sort'] && ($pa_options['sort'] != '_natural')) {
 				$va_hits = $this->sortHits($va_hits, $pa_options['sort'], (isset($pa_options['sort_direction']) ? $pa_options['sort_direction'] : null));
 			}
-			$o_res = new WLPlugSearchEngineCachedResult(array_keys($va_hits), array(), $vs_pk);
+			$o_res = new WLPlugSearchEngineCachedResult(array_keys($va_hits), $this->opn_tablenum);
 		} else {
 			$vs_char_set = $this->opo_app_config->get('character_set');
 	
@@ -173,11 +173,12 @@ class SearchEngine extends SearchBase {
 			try {
 				$o_parsed_query = $o_query_parser->parse($ps_search, $vs_char_set);
 			} catch (Exception $e) {
-				$o_query_parser->parse('', $vs_char_set);
+				// Retry search with all non-alphanumeric characters removed
+				$o_parsed_query = $o_query_parser->parse(preg_replace("![^A-Za-z0-9 ]+!", " ", $ps_search), $vs_char_set);
 			}
 			$va_rewrite_results = $this->_rewriteQuery($o_parsed_query);
 			$o_rewritten_query = new Zend_Search_Lucene_Search_Query_Boolean($va_rewrite_results['terms'], $va_rewrite_results['signs']);
-	
+
 			$vs_search = $this->_queryToString($o_rewritten_query);
 			//print "<div style='background:#FFFFFF; padding: 5px; border: 1px dotted #666666;'><strong>DEBUG: </strong>".$ps_search.'/'.$vs_search."</div>";
 			
@@ -218,7 +219,7 @@ class SearchEngine extends SearchBase {
 			}
 			
 			$va_hit_values = array_keys($va_hits);
-			$o_res = new WLPlugSearchEngineCachedResult($va_hit_values, $va_query_terms, $vs_pk);
+			$o_res = new WLPlugSearchEngineCachedResult($va_hit_values, $this->opn_tablenum);
 			
 			// cache for later use
 			$o_cache->save($ps_search, $this->opn_tablenum, array_flip($va_hit_values), null, null, array_merge($pa_options, array('filters' => $this->getResultFilters())));
@@ -244,11 +245,11 @@ class SearchEngine extends SearchBase {
 			));
 		}
 		if ($po_result) {
-			$po_result->init($this->opn_tablenum, $o_res, $this->opa_tables);
+			$po_result->init($o_res, $this->opa_tables);
 			
 			return $po_result;
 		} else {
-			return new SearchResult($this->opn_tablenum, $o_res, $this->opa_tables);
+			return new SearchResult($o_res, $this->opa_tables);
 		}
 	}
 	# ------------------------------------------------------------------
@@ -481,13 +482,13 @@ class SearchEngine extends SearchBase {
 			$va_hits[] = $qr_res->get($vs_table_pk, array('binary' => true));
 		}
 		
-		$o_res = new WLPlugSearchEngineCachedResult($va_hits, array(), $vs_table_pk);
+		$o_res = new WLPlugSearchEngineCachedResult($va_hits, $this->opn_tablenum);
 		
 		if ($po_result) {
-			$po_result->init($this->opn_tablenum, $o_res, array());
+			$po_result->init($o_res, array());
 			return $po_result;
 		} else {
-			return new SearchResult($this->opn_tablenum, $o_res);
+			return new SearchResult($o_res, array());
 		}
 	}
 	# ------------------------------------------------------------------
@@ -530,7 +531,7 @@ class SearchEngine extends SearchBase {
 						
 						$vs_locale_where = "attr.locale_id";
 						$vs_sql = "
-							SELECT t.{$vs_table_pk}, attr.locale_id, {$vs_sort_field}
+							SELECT t.{$vs_table_pk}, attr.locale_id, attr_vals.{$vs_sort_field}
 							FROM {$vs_table_name} t
 							INNER JOIN ca_attributes AS attr ON attr.row_id = t.{$vs_table_pk}
 							INNER JOIN ca_attribute_values AS attr_vals ON attr_vals.attribute_id = attr.attribute_id
@@ -541,7 +542,7 @@ class SearchEngine extends SearchBase {
 						";
 						//print $vs_sql;
 						
-						$qr_sort = $this->opo_db->query($vs_sql, (int)$vn_element_id, (int)$this->opn_browse_table_num);
+						$qr_sort = $this->opo_db->query($vs_sql, (int)$vn_element_id, (int)$this->opn_tablenum);
 
 						while($qr_sort->nextRow()) {
 							$va_sorted_hits[$vn_id = $qr_sort->get($vs_table_pk, array('binary' => true))][$qr_sort->get('locale_id', array('binary' => true))] .= trim(preg_replace('![^A-Za-z0-9 ]+!', '', strip_tags(mb_strtolower($qr_sort->get($vs_sort_field)))));
@@ -687,25 +688,17 @@ class SearchEngine extends SearchBase {
 					$va_signs[] = isset($va_old_signs[$vn_i]) ? $va_old_signs[$vn_i] : true;
 					break;
 				case 'Zend_Search_Lucene_Search_Query_Term':
-				//	if (preg_match('!\-!', $vs_term_text = $o_term->getTerm()->text)) {	// hack to force hyphenated terms to quoted strings with a space instead of hyphen; addresses issue where PHP Lucene parser seems to do the wrong thing
-				//		$vs_term_text = str_replace("-", " ", $vs_term_text);
-				//		$va_terms[] = new Zend_Search_Lucene_Search_Query_Phrase(array($vs_term_text), null, $o_term->getTerm()->field);
-				//		$va_signs[] = isset($va_old_signs[$vn_i]) ? $va_old_signs[$vn_i] : true;
-				//	} else {
-						$va_rewritten_terms = $this->_rewriteTerm($o_term, $va_old_signs[$vn_i]);
-						if (sizeof($va_rewritten_terms['terms']) == 1) {
-							$va_terms[] = new Zend_Search_Lucene_Search_Query_Term($va_rewritten_terms['terms'][0]);
-							$va_signs[] = $va_rewritten_terms['signs'][0];
-						} else { 
-							for($vn_i = 0; $vn_i < sizeof($va_rewritten_terms['terms']); $vn_i++) {
-								$va_terms[] = new Zend_Search_Lucene_Search_Query_MultiTerm(array($va_rewritten_terms['terms'][$vn_i]), array($va_rewritten_terms['signs'][$vn_i]));
-								$va_signs[] = $va_rewritten_terms['signs'][$vn_i] ? true : null;
-							}
-							//$o_mt = new Zend_Search_Lucene_Search_Query_MultiTerm($va_rewritten_terms['terms'], $va_rewritten_terms['signs']);
+					$va_rewritten_terms = $this->_rewriteTerm($o_term, $va_old_signs[$vn_i]);
+					if (sizeof($va_rewritten_terms['terms']) == 1) {
+						$va_terms[] = new Zend_Search_Lucene_Search_Query_Term($va_rewritten_terms['terms'][0]);
+						$va_signs[] = $va_rewritten_terms['signs'][0];
+					} else { 
+						for($vn_i = 0; $vn_i < sizeof($va_rewritten_terms['terms']); $vn_i++) {
+							$va_terms[] = new Zend_Search_Lucene_Search_Query_MultiTerm(array($va_rewritten_terms['terms'][$vn_i]), array($va_rewritten_terms['signs'][$vn_i]));
+							$va_signs[] = $va_rewritten_terms['signs'][$vn_i] ? true : null;
 						}
-						//$va_terms[] = $o_mt;
-						//$va_signs[] = sizeof($va_old_signs) ? array_shift($va_old_signs): true;
-					//}
+						//$o_mt = new Zend_Search_Lucene_Search_Query_MultiTerm($va_rewritten_terms['terms'], $va_rewritten_terms['signs']);
+					}
 					break;
 				case 'Zend_Search_Lucene_Index_Term':
 					$va_rewritten_terms = $this->_rewriteTerm(new Zend_Search_Lucene_Search_Query_Term($o_term), $va_old_signs[$vn_i]);

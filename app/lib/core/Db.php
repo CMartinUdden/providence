@@ -475,7 +475,7 @@ class Db extends DbBase {
 		return $this->opo_db->getFieldNamesFromTable($this, $ps_table);
 	}
 	/**
-	 * Returns an array with the names of all fields for a given table.
+	 * Returns an array with the field information for a given table.
 	 * Returns false if you're not connected to a database.
 	 *
 	 * @param string $ps_table name of the table
@@ -530,4 +530,3 @@ class Db extends DbBase {
 		unset($this->opo_db);
 	}
 }
-?>
