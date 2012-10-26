@@ -1,4 +1,4 @@
-#!/usr/local/bin/php
+#!/usr/bin/php
 <?php
 	set_time_limit(24 * 60 * 60 * 7); /* maximum indexing time: 7 days :-) */
 	

@@ -1,4 +1,4 @@
-#!/usr/local/bin/php
+#!/usr/bin/php
 <?php
 	define('__CollectiveAccess_IS_VERIFYING_STRUCTURE__', 1);
 	
