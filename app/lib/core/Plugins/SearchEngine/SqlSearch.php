@@ -796,7 +796,7 @@ class WLPlugSearchEngineSqlSearch extends BaseSearchPlugin implements IWLPlugSea
 														if ($this->opo_tep->parse($vs_raw_term)) {
 															$va_dates = $this->opo_tep->getHistoricTimestamps();
 															$vs_direct_sql_query = "
-																SELECT ca.row_id, 1
+																SELECT ca.row_id, 1 as boost
 																FROM ca_attribute_values cav
 																INNER JOIN ca_attributes AS ca ON ca.attribute_id = cav.attribute_id
 																^JOIN
@@ -815,7 +815,7 @@ class WLPlugSearchEngineSqlSearch extends BaseSearchPlugin implements IWLPlugSea
 														if ($this->opo_tep->parse($vs_raw_term)) {
 															$va_dates = $this->opo_tep->getHistoricTimestamps();
 															$vs_direct_sql_query = "
-																SELECT ca.row_id, 1
+																SELECT ca.row_id, 1 as boost
 																FROM ca_attribute_values cav
 																INNER JOIN ca_attributes AS ca ON ca.attribute_id = cav.attribute_id
 																^JOIN
@@ -841,7 +841,7 @@ class WLPlugSearchEngineSqlSearch extends BaseSearchPlugin implements IWLPlugSea
 													if ($va_coords = caParseGISSearch(join(' ', $va_raw_terms))) {
 														
 														$vs_direct_sql_query = "
-															SELECT ca.row_id, 1
+															SELECT ca.row_id, 1 as boost
 															FROM ca_attribute_values cav
 															INNER JOIN ca_attributes AS ca ON ca.attribute_id = cav.attribute_id
 															^JOIN
@@ -862,7 +862,7 @@ class WLPlugSearchEngineSqlSearch extends BaseSearchPlugin implements IWLPlugSea
 													$vs_currency = preg_replace('![^A-Z0-9]+!', '', $va_parsed_value['value_longtext1']);
 													
 													$vs_direct_sql_query = "
-														SELECT ca.row_id, 1
+														SELECT ca.row_id, 1 as boost
 														FROM ca_attribute_values cav
 														INNER JOIN ca_attributes AS ca ON ca.attribute_id = cav.attribute_id
 														^JOIN
@@ -881,7 +881,7 @@ class WLPlugSearchEngineSqlSearch extends BaseSearchPlugin implements IWLPlugSea
 													$vn_len = $va_parsed_value['value_decimal1'];	// this is always in meters so we can compare this value to the one in the database
 													
 													$vs_direct_sql_query = "
-														SELECT ca.row_id, 1
+														SELECT ca.row_id, 1 as boost
 														FROM ca_attribute_values cav
 														INNER JOIN ca_attributes AS ca ON ca.attribute_id = cav.attribute_id
 														^JOIN
@@ -898,7 +898,7 @@ class WLPlugSearchEngineSqlSearch extends BaseSearchPlugin implements IWLPlugSea
 													$vn_weight = $va_parsed_value['value_decimal1'];	// this is always in kilograms so we can compare this value to the one in the database
 													
 													$vs_direct_sql_query = "
-														SELECT ca.row_id, 1
+														SELECT ca.row_id, 1 as boost
 														FROM ca_attribute_values cav
 														INNER JOIN ca_attributes AS ca ON ca.attribute_id = cav.attribute_id
 														^JOIN
@@ -915,7 +915,7 @@ class WLPlugSearchEngineSqlSearch extends BaseSearchPlugin implements IWLPlugSea
 													$vn_timecode = $va_parsed_value['value_decimal1'];
 													
 													$vs_direct_sql_query = "
-														SELECT ca.row_id, 1
+														SELECT ca.row_id, 1 as boost
 														FROM ca_attribute_values cav
 														INNER JOIN ca_attributes AS ca ON ca.attribute_id = cav.attribute_id
 														^JOIN
@@ -928,7 +928,7 @@ class WLPlugSearchEngineSqlSearch extends BaseSearchPlugin implements IWLPlugSea
 													break;
 												case 11: 	// integer
 													$vs_direct_sql_query = "
-														SELECT ca.row_id, 1
+														SELECT ca.row_id, 1 as boost
 														FROM ca_attribute_values cav
 														INNER JOIN ca_attributes AS ca ON ca.attribute_id = cav.attribute_id
 														^JOIN
@@ -941,7 +941,7 @@ class WLPlugSearchEngineSqlSearch extends BaseSearchPlugin implements IWLPlugSea
 													break;
 												case 12:	// decimal
 													$vs_direct_sql_query = "
-														SELECT ca.row_id, 1
+														SELECT ca.row_id, 1 as boost
 														FROM ca_attribute_values cav
 														INNER JOIN ca_attributes AS ca ON ca.attribute_id = cav.attribute_id
 														^JOIN
