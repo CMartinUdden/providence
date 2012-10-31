@@ -140,6 +140,10 @@ class WLPlugSearchEngineSqlSearch extends BaseSearchPlugin implements IWLPlugSea
 			$this->ops_search_tokenizer_regex = "^\pL\pN\pNd/_#\@\&";
 		}
 		
+		if (!is_array($this->opa_asis_regexes = $this->opo_search_config->getList('asis_regexes'))) {
+			$this->opa_asis_regexes = array();
+		}
+		
 		
 		//$this->opqr_insert_ngram = $this->opo_db->prepare($this->ops_insert_ngram_sql);
 		
@@ -354,7 +358,7 @@ class WLPlugSearchEngineSqlSearch extends BaseSearchPlugin implements IWLPlugSea
 			);
 		}
 
-		return new WLPlugSearchEngineSqlSearchResult($va_hits, array());
+		return new WLPlugSearchEngineSqlSearchResult($va_hits, $pn_subject_tablenum);
 	}
 	# -------------------------------------------------------
 	private function _createTempTable($ps_name) {
@@ -663,7 +667,7 @@ class WLPlugSearchEngineSqlSearch extends BaseSearchPlugin implements IWLPlugSea
 							$vs_access_point = $o_lucene_query_element->getTerm()->field;
 							$vs_term = $o_lucene_query_element->getTerm()->text;
 							
-							$va_terms = $this->_tokenize($vs_term, true);
+							$va_terms = $this->_tokenize($vs_term, true, $vn_i);
 							$vb_output_term = false;
 							foreach($va_terms as $vs_term) {
 								if (in_array(trim(mb_strtolower($vs_term, 'UTF-8')), WLPlugSearchEngineSqlSearch::$s_stop_words)) { continue; }
@@ -792,7 +796,7 @@ class WLPlugSearchEngineSqlSearch extends BaseSearchPlugin implements IWLPlugSea
 														if ($this->opo_tep->parse($vs_raw_term)) {
 															$va_dates = $this->opo_tep->getHistoricTimestamps();
 															$vs_direct_sql_query = "
-																SELECT ca.row_id, 1
+																SELECT ca.row_id, 1 as boost
 																FROM ca_attribute_values cav
 																INNER JOIN ca_attributes AS ca ON ca.attribute_id = cav.attribute_id
 																^JOIN
@@ -811,7 +815,7 @@ class WLPlugSearchEngineSqlSearch extends BaseSearchPlugin implements IWLPlugSea
 														if ($this->opo_tep->parse($vs_raw_term)) {
 															$va_dates = $this->opo_tep->getHistoricTimestamps();
 															$vs_direct_sql_query = "
-																SELECT ca.row_id, 1
+																SELECT ca.row_id, 1 as boost
 																FROM ca_attribute_values cav
 																INNER JOIN ca_attributes AS ca ON ca.attribute_id = cav.attribute_id
 																^JOIN
@@ -837,7 +841,7 @@ class WLPlugSearchEngineSqlSearch extends BaseSearchPlugin implements IWLPlugSea
 													if ($va_coords = caParseGISSearch(join(' ', $va_raw_terms))) {
 														
 														$vs_direct_sql_query = "
-															SELECT ca.row_id, 1
+															SELECT ca.row_id, 1 as boost
 															FROM ca_attribute_values cav
 															INNER JOIN ca_attributes AS ca ON ca.attribute_id = cav.attribute_id
 															^JOIN
@@ -858,7 +862,7 @@ class WLPlugSearchEngineSqlSearch extends BaseSearchPlugin implements IWLPlugSea
 													$vs_currency = preg_replace('![^A-Z0-9]+!', '', $va_parsed_value['value_longtext1']);
 													
 													$vs_direct_sql_query = "
-														SELECT ca.row_id, 1
+														SELECT ca.row_id, 1 as boost
 														FROM ca_attribute_values cav
 														INNER JOIN ca_attributes AS ca ON ca.attribute_id = cav.attribute_id
 														^JOIN
@@ -877,7 +881,7 @@ class WLPlugSearchEngineSqlSearch extends BaseSearchPlugin implements IWLPlugSea
 													$vn_len = $va_parsed_value['value_decimal1'];	// this is always in meters so we can compare this value to the one in the database
 													
 													$vs_direct_sql_query = "
-														SELECT ca.row_id, 1
+														SELECT ca.row_id, 1 as boost
 														FROM ca_attribute_values cav
 														INNER JOIN ca_attributes AS ca ON ca.attribute_id = cav.attribute_id
 														^JOIN
@@ -894,7 +898,7 @@ class WLPlugSearchEngineSqlSearch extends BaseSearchPlugin implements IWLPlugSea
 													$vn_weight = $va_parsed_value['value_decimal1'];	// this is always in kilograms so we can compare this value to the one in the database
 													
 													$vs_direct_sql_query = "
-														SELECT ca.row_id, 1
+														SELECT ca.row_id, 1 as boost
 														FROM ca_attribute_values cav
 														INNER JOIN ca_attributes AS ca ON ca.attribute_id = cav.attribute_id
 														^JOIN
@@ -911,7 +915,7 @@ class WLPlugSearchEngineSqlSearch extends BaseSearchPlugin implements IWLPlugSea
 													$vn_timecode = $va_parsed_value['value_decimal1'];
 													
 													$vs_direct_sql_query = "
-														SELECT ca.row_id, 1
+														SELECT ca.row_id, 1 as boost
 														FROM ca_attribute_values cav
 														INNER JOIN ca_attributes AS ca ON ca.attribute_id = cav.attribute_id
 														^JOIN
@@ -924,7 +928,7 @@ class WLPlugSearchEngineSqlSearch extends BaseSearchPlugin implements IWLPlugSea
 													break;
 												case 11: 	// integer
 													$vs_direct_sql_query = "
-														SELECT ca.row_id, 1
+														SELECT ca.row_id, 1 as boost
 														FROM ca_attribute_values cav
 														INNER JOIN ca_attributes AS ca ON ca.attribute_id = cav.attribute_id
 														^JOIN
@@ -937,7 +941,7 @@ class WLPlugSearchEngineSqlSearch extends BaseSearchPlugin implements IWLPlugSea
 													break;
 												case 12:	// decimal
 													$vs_direct_sql_query = "
-														SELECT ca.row_id, 1
+														SELECT ca.row_id, 1 as boost
 														FROM ca_attribute_values cav
 														INNER JOIN ca_attributes AS ca ON ca.attribute_id = cav.attribute_id
 														^JOIN
@@ -1006,7 +1010,7 @@ class WLPlugSearchEngineSqlSearch extends BaseSearchPlugin implements IWLPlugSea
 						}
 						
 						if (!sizeof($va_sql_where)) { continue; }
-						$vs_sql_where = join(' AND ', $va_sql_where);
+						$vs_sql_where = join(' OR ', $va_sql_where);
 					}
 					
 					
@@ -1391,9 +1395,18 @@ class WLPlugSearchEngineSqlSearch extends BaseSearchPlugin implements IWLPlugSea
 		return 'SqlSearch';
 	}
 	# --------------------------------------------------
-	private function _tokenize($ps_content, $pb_for_search=false) {
+	private function _tokenize($ps_content, $pb_for_search=false, $pn_index=0) {
 		$ps_content = preg_replace('![\']+!', '', $ps_content);		// strip apostrophes for compatibility with SearchEngine class, which does the same to all search expressions
+		
 		if ($pb_for_search) {
+			if ($pn_index == 0) {
+				foreach($this->opa_asis_regexes as $vs_asis_regex) {
+					if (preg_match('!'.$vs_asis_regex.'!', $ps_content)) {
+						return array($ps_content);
+					}
+				}
+			}
+		
 			return preg_split('![ ]+!', trim(preg_replace('!['.$this->ops_search_tokenizer_regex.']+!u', ' ', strip_tags($ps_content))));
 		} else {
 			return preg_split('![ ]+!', trim(preg_replace('!['.$this->ops_indexing_tokenizer_regex.']+!u', ' ', strip_tags($ps_content))));
