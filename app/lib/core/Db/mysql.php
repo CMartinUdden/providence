@@ -48,6 +48,11 @@ $g_db_driver = "mysql";
 $g_mysql_statement_cache = array();
 
 /**
+ * Flag indicating if db user has FILE priv; null=undetermined
+ */
+$g_mysql_has_file_priv = null;
+
+/**
  * MySQL driver for Db abstraction class
  *
  * You should always use the Db class as interface to the database.

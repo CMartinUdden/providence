@@ -323,9 +323,10 @@ class WLPlugSearchEngineSqlSearch extends BaseSearchPlugin implements IWLPlugSea
 						}
 						$va_wheres[] = "(".$va_filter['field']." ".$va_filter['operator']." ".$this->_filterValueToQueryValue($va_filter).")";
 					} else {
+						$t_table = $this->opo_datamodel->getInstanceByTableName($va_tmp[0], true);
 						// join in primary table
 						if (!isset($va_joins[$va_tmp[0]])) {
-							$va_joins[$va_tmp[0]] = "INNER JOIN ".$va_tmp[0]." ON ".$va_tmp[0].".".$t_instance->primaryKey()." = ca_sql_search_search_final.row_id";
+							$va_joins[$va_tmp[0]] = "INNER JOIN ".$va_tmp[0]." ON ".$va_tmp[0].".".$t_table->primaryKey()." = ca_sql_search_search_final.row_id";
 						}
 						$va_wheres[] = "(".$va_filter['field']." ".$va_filter['operator']." ".$this->_filterValueToQueryValue($va_filter).")";
 					}
@@ -1011,6 +1012,8 @@ class WLPlugSearchEngineSqlSearch extends BaseSearchPlugin implements IWLPlugSea
 						
 						if (!sizeof($va_sql_where)) { continue; }
 						$vs_sql_where = join(' OR ', $va_sql_where);
+					} else {
+						$va_ft_terms = $va_ft_like_terms = $va_ft_like_terms = array();
 					}
 					
 					
@@ -1074,17 +1077,15 @@ class WLPlugSearchEngineSqlSearch extends BaseSearchPlugin implements IWLPlugSea
 									$vs_direct_sql_query = str_replace('^JOIN', "", $vs_direct_sql_query);
 								}
 								$vs_sql = "
-									DELETE FROM {$ps_dest_table} WHERE row_id IN
-									(SELECT swi.row_id
-									FROM ca_sql_search_word_index swi
-									INNER JOIN ca_sql_search_words AS sw ON sw.word_id = swi.word_id
-									WHERE
-										{$vs_sql_where}
+									DELETE FROM {$ps_dest_table} 
+									USING {$ps_dest_table}, ca_sql_search_words sw, ca_sql_search_word_index swi
+									WHERE 
+										".($vs_sql_where ? "{$vs_sql_where} AND " : "")."
+										{$ps_dest_table}.row_id = swi.row_id AND
+										sw.word_id = swi.word_id
 										AND
 										swi.table_num = ?
 										".($this->getOption('omitPrivateIndexing') ? " AND swi.access = 0" : '')."
-									GROUP BY
-										swi.row_id)
 								";
 							
 								//print "$vs_sql<hr>";

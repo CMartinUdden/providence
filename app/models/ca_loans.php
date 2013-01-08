@@ -253,6 +253,11 @@ class ca_loans extends BundlableLabelableBaseModelWithAttributes implements IBun
 	protected $SEARCH_RESULT_CLASSNAME = 'LoanSearchResult';
 	
 	# ------------------------------------------------------
+	# ACL
+	# ------------------------------------------------------
+	protected $SUPPORTS_ACL = true;
+	
+	# ------------------------------------------------------
 	# $FIELDS contains information about each field in the table. The order in which the fields
 	# are listed here is the order in which they will be returned using getFields()
 
@@ -286,6 +291,29 @@ class ca_loans extends BundlableLabelableBaseModelWithAttributes implements IBun
 		$this->BUNDLES['ca_storage_locations'] = array('type' => 'related_table', 'repeating' => true, 'label' => _t('Related storage locations'));
 		
 		$this->BUNDLES['ca_list_items'] = array('type' => 'related_table', 'repeating' => true, 'label' => _t('Related vocabulary terms'));
+	}
+	# ------------------------------------------------------
+	/**
+	 * Finds loans with a label that matches $ps_name exactly
+	 *
+	 * @param string $ps_name The name to search for
+	 * @return array A list of loan_ids with the specified label
+	 */
+	public function getLoanIDsByName($ps_name) {
+		$o_db = $this->getDb();
+		$qr_res = $o_db->query("
+			SELECT DISTINCT cae.loan_id
+			FROM ca_loans cae
+			INNER JOIN ca_loan_labels AS cael ON cael.loan_id = cae.loan_id
+			WHERE
+				cael.name = ?
+		", (string)$ps_name);
+		
+		$va_loan_ids = array();
+		while($qr_res->nextRow()) {
+			$va_loan_ids[] = $qr_res->get('loan_id');
+		}
+		return $va_loan_ids;
 	}
 	# ------------------------------------------------------
 }

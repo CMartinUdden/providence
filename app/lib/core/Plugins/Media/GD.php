@@ -57,6 +57,7 @@ class WLPlugMediaGD Extends WLPlug Implements IWLPlugMedia {
 	var $opo_config;
 	var $opo_external_app_config;
 	var $ops_imagemagick_path;
+	var $ops_graphicsmagick_path;
 	
 	var $info = array(
 		"IMPORT" => array(
@@ -123,6 +124,7 @@ class WLPlugMediaGD Extends WLPlug Implements IWLPlugMedia {
 		$vs_external_app_config_path = $this->opo_config->get('external_applications');
 		$this->opo_external_app_config = Configuration::load($vs_external_app_config_path);
 		$this->ops_imagemagick_path = $this->opo_external_app_config->get('imagemagick_path');
+		$this->ops_graphicsmagick_path = $this->opo_external_app_config->get('graphicsmagick_app');
 		$this->ops_CoreImage_path = $this->opo_external_app_config->get('coreimagetool_app');
 		
 		if (caMediaPluginCoreImageInstalled($this->ops_CoreImage_path)) {
@@ -131,8 +133,14 @@ class WLPlugMediaGD Extends WLPlug Implements IWLPlugMedia {
 		if (caMediaPluginImagickInstalled()) {	
 			return null;	// don't use GD if Imagick is available
 		} 
+		if (caMediaPluginGmagickInstalled()) {	
+			return null;	// don't use GD if Gmagick is available
+		} 
 		if (caMediaPluginImageMagickInstalled($this->ops_imagemagick_path)) {
 			return null;	// don't use if ImageMagick executables are available
+		}
+		if (caMediaPluginGraphicsMagickInstalled($this->ops_graphicsmagick_path)){
+			return null;	// don't use if GraphicsMagick is available
 		}
 		if (!caMediaPluginGDInstalled()) {
 			return null;	// don't use if GD functions are not available
@@ -159,6 +167,14 @@ class WLPlugMediaGD Extends WLPlug Implements IWLPlugMedia {
 			if (caMediaPluginImageMagickInstalled($this->ops_imagemagick_path)) {
 				$va_status['unused'] = true;
 				$va_status['warnings'][] = _t("Didn't load because ImageMagick (command-line) is available and preferred");
+			}
+			if (caMediaPluginGmagickInstalled()) {	
+				$va_status['unused'] = true;
+				$va_status['warnings'][] = _t("Didn't load because Gmagick is available and preferred");
+			}
+			if (caMediaPluginGraphicsMagickInstalled($this->ops_graphicsmagick_path)) {
+				$va_status['unused'] = true;
+				$va_status['warnings'][] = _t("Didn't load because GraphicsMagick is available and preferred");
 			}
 			if (!caMediaPluginGDInstalled()) {
 				$va_status['errors'][] = _t("Didn't load because your PHP install lacks GD support");
@@ -352,7 +368,7 @@ class WLPlugMediaGD Extends WLPlug Implements IWLPlugMedia {
 					break;
 				case IMAGETYPE_JPEG:
 					if(function_exists('exif_read_data')) {
-						$this->metadata["EXIF"] = $va_exif = @exif_read_data($filepath, 'EXIF', true, false);
+						$this->metadata["EXIF"] = $va_exif = caSanitizeArray(@exif_read_data($filepath, 'EXIF', true, false));
 						
 						
 						//
@@ -624,7 +640,7 @@ class WLPlugMediaGD Extends WLPlug Implements IWLPlugMedia {
 						"layers" => $this->properties["layers"],
 					)					
 				))) {
-					$this->postError(1610, $this->handle->error, "WLPlugTilepic->write()");	
+					$this->postError(1610, $tp->error, "WLPlugTilepic->write()");	
 					return false;
 				}
 			}
@@ -634,7 +650,7 @@ class WLPlugMediaGD Extends WLPlug Implements IWLPlugMedia {
 			}
 			$this->properties["mimetype"] = "image/tilepic";
 			$this->properties["typename"] = "Tilepic";
-			return true;
+			return $filepath;
 		} else {
 			# is mimetype valid?
 			if (!($ext = $this->info["EXPORT"][$mimetype])) {
@@ -678,7 +694,7 @@ class WLPlugMediaGD Extends WLPlug Implements IWLPlugMedia {
 			$this->properties["mimetype"] = $mimetype;
 			$this->properties["typename"] = $vs_typename;
 			
-			return true;
+			return $filepath.".".$ext;
 		}
 	}
 	# ------------------------------------------------

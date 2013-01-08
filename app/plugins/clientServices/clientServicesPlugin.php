@@ -65,7 +65,7 @@
 			$t_log = new Eventlog();
 			$o_db = new Db();
 			
-			
+			if (!((bool)$this->opo_config->get('enable_client_services'))) { return true; }
 			
 			// Find any orders with status PROCESSED_AWAITING_MEDIA_ACCESS and fetch media
 			$qr_orders = $o_db->query("
@@ -97,7 +97,7 @@
 						foreach($va_representation_md5s as $vn_i => $vs_representation_md5) {
 							$o_xml = $o_client->getObjectRepresentationURLByMD5($vs_representation_md5, 'original')->get();
 							$vs_url = (string)$o_xml->getObjectRepresentationURLByMD5->original;
-							
+							if (!$vs_url) { continue; }	// media no longer exists
 							// fetch the file
 							$t_rep = new ca_object_representations($va_missing_media_representation_ids[$vn_object_id][$vn_i]);
 							if ($t_rep->getPrimaryKey() && ($vs_target_path = $t_rep->getMediaPath('media', 'original'))) {
@@ -120,7 +120,7 @@
 								// verify the file was downloaded correctly
 								if (($vs_target_md5 = md5_file($vs_target_path)) !== $vs_representation_md5) {
 									unlink($vs_target_path);
-									$t_log->log(array('CODE' => 'ERR', 'MESSAGE' => _t('Media file %1 failed to be downloaded from %2; checksums differ: %3/%4', $vs_target_path, $vs_url, $vs_representation_md5, $vs_target_md5), 'SOURCE' => 'clientServicesPlugin->hookPeriodicTask'));
+									$t_log->log(array('CODE' => 'ERR', 'MESSAGE' => _t('Media file %1 failed to be downloaded from url "%2"; checksums differ: %3/%4', $vs_target_path, $vs_url, $vs_representation_md5, $vs_target_md5), 'SOURCE' => 'clientServicesPlugin->hookPeriodicTask'));
 									$vb_download_errors = true;
 								}
 							} else {
@@ -202,6 +202,8 @@
 					}	
 				}
 			}
+			
+			return true;
 		}
 		# -------------------------------------------------------
 		/**

@@ -1,7 +1,4 @@
-test.php
-dbtest.php
-setup-mysqlpdo.php
-setup-pgsqlpdo.php
+/nbproject/*
+app/tmp/*
 setup.php
-media/
-
+/media/*

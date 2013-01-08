@@ -7,7 +7,7 @@
  * ----------------------------------------------------------------------
  *
  * Software by Whirl-i-Gig (http://www.whirl-i-gig.com)
- * Copyright 2010 Whirl-i-Gig
+ * Copyright 2010-2013 Whirl-i-Gig
  *
  * For more information visit http://www.CollectiveAccess.org
  *
@@ -80,6 +80,28 @@
 			return $_MEDIAHELPER_PLUGIN_CACHE_IMAGEMAGICK[$ps_imagemagick_path] = true;
 		}
 		return $_MEDIAHELPER_PLUGIN_CACHE_IMAGEMAGICK[$ps_imagemagick_path] = false;
+	}
+	# ------------------------------------------------------------------------------------------------
+	/**
+	 * Detects if GraphicsMagick is available in specified directory path
+	 * 
+	 * @param $ps_graphicsmagick_path - path to directory containing GraphicsMagick executables
+	 * @return boolean - true if available, false if not
+	 */
+	function caMediaPluginGraphicsMagickInstalled($ps_graphicsmagick_path) {
+		global $_MEDIAHELPER_PLUGIN_CACHE_GRAPHICSMAGICK;
+		if (isset($_MEDIAHELPER_PLUGIN_CACHE_GRAPHICSMAGICK[$ps_graphicsmagick_path])) {
+			return $_MEDIAHELPER_PLUGIN_CACHE_GRAPHICSMAGICK[$ps_graphicsmagick_path];
+		} else {
+			$_MEDIAHELPER_PLUGIN_CACHE_GRAPHICSMAGICK = array();
+		}
+		if (!$ps_graphicsmagick_path || (preg_match("/[^\/A-Za-z0-9\.:]+/", $ps_graphicsmagick_path)) || !file_exists($ps_graphicsmagick_path)) { return false; }
+		
+		exec($ps_graphicsmagick_path.' 2> /dev/null', $va_output, $vn_return);
+		if (($vn_return >= 0) && ($vn_return < 127)) {
+			return $_MEDIAHELPER_PLUGIN_CACHE_GRAPHICSMAGICK[$ps_graphicsmagick_path] = true;
+		}
+		return $_MEDIAHELPER_PLUGIN_CACHE_GRAPHICSMAGICK[$ps_graphicsmagick_path] = false;
 	}
 	# ------------------------------------------------------------------------------------------------
 	/**
@@ -201,6 +223,15 @@
 		$o_config = Configuration::load();
 		if ($o_config->get('dont_use_imagick')) { return false; }
 		return class_exists('Imagick') ? true : false;
+	}
+	# ------------------------------------------------------------------------------------------------
+	/**
+	 * Detects if Gmagick PHP extension is available
+	 * 
+	 * @return boolean - true if available, false if not
+	 */
+	function caMediaPluginGmagickInstalled() {
+		return class_exists('Gmagick') ? true : false;
 	}
 	# ------------------------------------------------------------------------------------------------
 	/**
@@ -660,7 +691,10 @@
 					$vs_selected_size = $vs_size;
 				}
 			}
-			if (!$vs_selected_size) { $vs_selected_size = array_shift(array_keys($va_icons)); }
+			if (!$vs_selected_size) { 
+				$va_tmp = array_keys($va_icons);
+				$vs_selected_size = array_shift($va_tmp); 
+			}
 		}
 		$va_tmp = explode('x', $vs_selected_size);
 		return array('size' => $vs_selected_size, 'width' => $va_tmp[0], 'height' => $va_tmp[1]);

@@ -294,6 +294,11 @@ class ca_places extends BundlableLabelableBaseModelWithAttributes implements IBu
 	protected $SEARCH_RESULT_CLASSNAME = 'PlaceSearchResult';
 	
 	# ------------------------------------------------------
+	# ACL
+	# ------------------------------------------------------
+	protected $SUPPORTS_ACL = true;
+	
+	# ------------------------------------------------------
 	# $FIELDS contains information about each field in the table. The order in which the fields
 	# are listed here is the order in which they will be returned using getFields()
 
@@ -446,7 +451,7 @@ class ca_places extends BundlableLabelableBaseModelWithAttributes implements IBu
 		");
 		while ($qr_res->nextRow()) {
 			$vn_hierarchy_id = $qr_res->get('hierarchy_id');
-			$va_place_hierarchies[$vn_hierarchy_id]['place_id'] = $qr_res->get('place_id');
+			$va_place_hierarchies[$vn_hierarchy_id]['place_id'] = $va_place_hierarchies[$vn_hierarchy_id]['item_id'] = $qr_res->get('place_id');
 			$va_place_hierarchies[$vn_hierarchy_id]['name'] = $va_place_hierarchies[$vn_hierarchy_id]['name_plural'];
 			$va_place_hierarchies[$vn_hierarchy_id]['children'] = $qr_res->get('children');
 		}

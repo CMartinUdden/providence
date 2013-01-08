@@ -213,6 +213,10 @@ class ca_lists extends BundlableLabelableBaseModelWithAttributes {
 	# ------------------------------------------------------
 	protected $SELF_RELATION_TABLE_NAME = null;
 	
+	# ------------------------------------------------------
+	# ACL
+	# ------------------------------------------------------
+	protected $SUPPORTS_ACL = true;
 	
 	static $s_list_item_cache = array();
 	static $s_list_id_cache = array();
@@ -425,7 +429,7 @@ class ca_lists extends BundlableLabelableBaseModelWithAttributes {
 				FROM ca_list_items cli
 				INNER JOIN ca_list_item_labels AS clil ON clil.item_id = cli.item_id
 				WHERE
-					(clil.is_preferred = 1) AND (cli.list_id = ?) {$vs_type_sql} {$vs_direct_children_sql} {$vs_hier_sql}
+					(cli.deleted = 0) AND (clil.is_preferred = 1) AND (cli.list_id = ?) {$vs_type_sql} {$vs_direct_children_sql} {$vs_hier_sql}
 				{$vs_order_by}
 			";
 			//print $vs_sql;
@@ -612,7 +616,7 @@ class ca_lists extends BundlableLabelableBaseModelWithAttributes {
 			FROM ca_list_items cli
 			INNER JOIN ca_list_item_labels AS clil ON clil.item_id = cli.item_id
 			WHERE
-				(clil.is_preferred = 1) AND (cli.list_id = ?) AND (cli.hier_left >= ? AND cli.hier_right <= ?)
+				(cli.deleted = 0) AND (clil.is_preferred = 1) AND (cli.list_id = ?) AND (cli.hier_left >= ? AND cli.hier_right <= ?)
 			{$vs_order_by}
 		", (int)$vn_list_id, floatval($t_item->get('hier_left')), floatval($t_item->get('hier_right')));
 		
@@ -662,7 +666,7 @@ class ca_lists extends BundlableLabelableBaseModelWithAttributes {
 			SELECT count(*) c
 			FROM ca_list_items cli
 			WHERE
-				(cli.list_id = ?) {$vs_type_sql} {$vs_include_root_sql}
+				(cli.deleted = 0) AND (cli.list_id = ?) {$vs_type_sql} {$vs_include_root_sql}
 		", (int)$vn_list_id);
 		
 		if($qr_res->nextRow()) {
@@ -704,13 +708,45 @@ class ca_lists extends BundlableLabelableBaseModelWithAttributes {
 			SELECT *
 			FROM ca_list_items cli
 			WHERE
-				(cli.list_id = ?) AND (cli.idno = ?)
+				(cli.deleted = 0) AND (cli.list_id = ?) AND (cli.idno = ?)
 		", (int)$vn_list_id, (string)$ps_item_idno);
 		
 		if ($qr_res->nextRow()) {
 			return  ca_lists::$s_list_item_get_cache[$vn_list_id.'/'.$ps_item_idno] = ca_lists::$s_list_item_get_cache[$pm_list_name_or_id.'/'.$ps_item_idno] = $qr_res->getRow();
 		}
 		return ca_lists::$s_list_item_get_cache[$vn_list_id.'/'.$ps_item_idno] = ca_lists::$s_list_item_get_cache[$pm_list_name_or_id.'/'.$ps_item_idno]  = null;
+	}
+	# ------------------------------------------------------
+	/**
+	 *
+	 */
+	public function getItemFromListForDisplay($pm_list_name_or_id, $ps_idno, $pb_return_plural=false) {
+	
+		if (isset(ca_lists::$s_list_item_display_cache[$ps_idno])) {
+			$va_items = ca_lists::$s_list_item_display_cache[$ps_idno];
+		} else {
+			$vn_list_id = $this->_getListID($pm_list_name_or_id);
+			
+			$o_db = $this->getDb();
+			$qr_res = $o_db->query("
+				SELECT cli.item_id, clil.locale_id, clil.name_singular, clil.name_plural
+				FROM ca_list_items cli
+				INNER JOIN ca_list_item_labels AS clil ON cli.item_id = clil.item_id
+				WHERE
+					(cli.deleted = 0) AND (cli.list_id = ?) AND (cli.idno = ?) AND (clil.is_preferred = 1)
+			", (int)$vn_list_id, (string)$ps_idno);
+			
+			$va_items = array();
+			while($qr_res->nextRow()) {
+				 $va_items[$vn_item_id = $qr_res->get('item_id')][$qr_res->get('locale_id')] = $qr_res->getRow();
+			}
+			ca_lists::$s_list_item_display_cache[$vn_item_id] = ca_lists::$s_list_item_display_cache[$vs_idno] = $va_items;
+		}
+		
+		$va_tmp = caExtractValuesByUserLocale($va_items, null, null, array());
+		$va_item = array_shift($va_tmp);
+		
+		return $va_item[$pb_return_plural ? 'name_plural' : 'name_singular'];
 	}
 	# ------------------------------------------------------
 	/**
@@ -729,7 +765,7 @@ class ca_lists extends BundlableLabelableBaseModelWithAttributes {
 				FROM ca_list_items cli
 				INNER JOIN ca_list_item_labels AS clil ON cli.item_id = clil.item_id
 				WHERE
-					(cli.list_id = ?) AND (cli.item_id = ?) AND (clil.is_preferred = 1)
+					(cli.deleted = 0) AND (cli.list_id = ?) AND (cli.item_id = ?) AND (clil.is_preferred = 1)
 			", (int)$vn_list_id, (int)$pn_item_id);
 			
 			$va_items = array();
@@ -759,7 +795,7 @@ class ca_lists extends BundlableLabelableBaseModelWithAttributes {
 				FROM ca_list_items cli
 				INNER JOIN ca_list_item_labels AS clil ON cli.item_id = clil.item_id
 				WHERE
-					(cli.item_id = ?) AND (clil.is_preferred = 1)
+					(cli.deleted = 0) AND (cli.item_id = ?) AND (clil.is_preferred = 1)
 			", (int)$pn_item_id);
 			
 			$va_items = array();
@@ -790,7 +826,7 @@ class ca_lists extends BundlableLabelableBaseModelWithAttributes {
 				FROM ca_list_items cli
 				INNER JOIN ca_list_item_labels AS clil ON cli.item_id = clil.item_id
 				WHERE
-					(cli.list_id = ?) AND (cli.item_value = ?) AND (clil.is_preferred = 1)
+					(cli.deleted = 0) AND (cli.list_id = ?) AND (cli.item_value = ?) AND (clil.is_preferred = 1)
 			", (int)$vn_list_id, (string)$pm_value);
 			
 			$va_items = array();
@@ -863,7 +899,7 @@ class ca_lists extends BundlableLabelableBaseModelWithAttributes {
 			SELECT item_id
 			FROM ca_list_items
 			WHERE
-				(list_id = ?) AND (parent_id IS NULL)
+				(cli.deleted = 0) AND (list_id = ?) AND (parent_id IS NULL)
 		", (int)$vn_list_id);
 		
 		$va_items = array();
@@ -885,7 +921,7 @@ class ca_lists extends BundlableLabelableBaseModelWithAttributes {
 			SELECT *
 			FROM ca_list_items cli
 			WHERE
-				(cli.list_id = ?) AND (cli.item_id = ?)
+				(cli.deleted = 0) AND (cli.list_id = ?) AND (cli.item_id = ?)
 		", (int)$vn_list_id, (int)$pn_item_id);
 		$va_items = array();
 		while($qr_res->nextRow()) {
@@ -979,7 +1015,7 @@ class ca_lists extends BundlableLabelableBaseModelWithAttributes {
 	 * Converts list specifier (code or list_id) into a list_id
 	 *
 	 * @param mixed $pm_list_name_or_id List code or list_id
-	 * @return int list for the specified list, or null if the list does not exist
+	 * @return int listva_list_items for the specified list, or null if the list does not exist
 	 */
 	static function getListCode($pm_list_name_or_id) {
 		if (ca_lists::$s_list_code_cache[$pm_list_name_or_id]) {
@@ -1011,18 +1047,24 @@ class ca_lists extends BundlableLabelableBaseModelWithAttributes {
 	 *  nullOption = if set then a "null" (no value) option is available labeled with the value passed in this option
 	 *  additionalOptions = an optional array of options that will be passed through to caHTMLSelect; keys are display labels and values are used as option values
 	 *  value = if set, the <select> will have default selection set to the item whose *value* matches the option value. If none is set then the first item in the list will be selected
-	 *  disabledOptions = optional array of item values to be disabled in the select. Disabled items cannot be selected by the user
 	 *  key = ca_list_item field to be used as value for the <select> element list; can be set to either item_id or item_value; default is item_id
 	 *	width = the display width of the list in characters or pixels
 	 *  limitToItemsWithID =
+	 *  omitItemsWithID = 
+	 *	
+	 *	limitToItemsRelatedToCollections = array of collection_id or idno
+	 *	limitToItemsRelatedToCollectionWithRelationshipTypes = array of type name or type_id
 	 * 
 	 * @return string - HTML code for the <select> element; empty string if the list is empty
 	 */
 	static public function getListAsHTMLFormElement($pm_list_name_or_id, $ps_name, $pa_attributes=null, $pa_options=null) {
 		$t_list = new ca_lists();
-		$vn_list_id = $t_list->_getListID($pm_list_name_or_id);
-		$t_list->load($vn_list_id);
+		
 		if (!is_array($pa_options)) { $pa_options = array(); }
+		if (!(isset($pa_options['limitToItemsRelatedToCollection']) && is_array($pa_options['limitToItemsRelatedToCollections']))) {
+			$vn_list_id = $t_list->_getListID($pm_list_name_or_id);
+			$t_list->load($vn_list_id);
+		}
 		$vn_root_id = (isset($pa_options['childrenOnlyForItemID']) && $pa_options['childrenOnlyForItemID']) ? $pa_options['childrenOnlyForItemID'] : null;
 		
 		$vs_render_as = isset($pa_options['render']) ? $pa_options['render'] : ''; 
@@ -1032,7 +1074,32 @@ class ca_lists extends BundlableLabelableBaseModelWithAttributes {
 		}
 		
 		if (!in_array($vs_render_as, array('lookup', 'horiz_hierbrowser', 'vert_hierbrowser'))) {
-			$va_list_items = $t_list->getItemsForList($pm_list_name_or_id, array_merge($pa_options, array('returnHierarchyLevels' => true, 'item_id' => $vn_root_id, 'extractValuesByUserLocale' => true, 'sort' => $vn_sort_type)));
+			if (isset($pa_options['limitToItemsRelatedToCollections']) && is_array($pa_options['limitToItemsRelatedToCollections'])) {
+				$t_collection = new ca_collections();
+				$va_collection_ids = array();
+				foreach($pa_options['limitToItemsRelatedToCollections'] as $vn_collection_id) {
+					if ($vn_collection_id && !is_numeric($vn_collection_id)) {
+						if ($vn_collection_id = $t_collection->load(array('idno' => $vn_collection_id))) {
+							$va_collection_ids[] = $vn_collection_id;
+						}
+					} else {
+						if ($vn_collection_id) {
+							$va_collection_ids[] = $vn_collection_id;
+						}
+					}
+				}
+				
+				if (sizeof($va_collection_ids)) {
+					$qr_collections = $t_list->makeSearchResult('ca_collections', $va_collection_ids, array('restrictToRelationshipTypes' => isset($pa_options['limitToItemsRelatedToCollectionWithRelationshipTypes']) ? $pa_options['limitToItemsRelatedToCollectionWithRelationshipTypes'] : null));
+					
+					
+					while($qr_collections->nextHit()) {
+						$va_list_items = $qr_collections->get('ca_list_items', array('returnAsArray' => true));
+					}
+				}
+			} else {
+				$va_list_items = $t_list->getItemsForList($pm_list_name_or_id, array_merge($pa_options, array('returnHierarchyLevels' => true, 'item_id' => $vn_root_id, 'extractValuesByUserLocale' => true, 'sort' => $vn_sort_type)));
+			}
 		}
 		
 		if (!is_array($va_list_items)) { $va_list_items = array(); }
@@ -1047,8 +1114,9 @@ class ca_lists extends BundlableLabelableBaseModelWithAttributes {
 		}
 		
 		if (!isset($pa_options['limitToItemsWithID']) || !is_array($pa_options['limitToItemsWithID']) || !sizeof($pa_options['limitToItemsWithID'])) { $pa_options['limitToItemsWithID'] = null; }
+		if (!isset($pa_options['omitItemsWithID']) || !is_array($pa_options['omitItemsWithID']) || !sizeof($pa_options['omitItemsWithID'])) { $pa_options['omitItemsWithID'] = null; }
 	
-		if (isset($pa_options['nullOption']) && $pa_options['nullOption']) {
+		if ((isset($pa_options['nullOption']) && $pa_options['nullOption']) && ($vs_render_as != 'checklist')) {
 			$va_options[''] = $pa_options['nullOption'];
 		}
 		
@@ -1056,6 +1124,7 @@ class ca_lists extends BundlableLabelableBaseModelWithAttributes {
 		$vn_default_val = null;
 		foreach($va_list_items as $vn_item_id => $va_item) {
 			if (is_array($pa_options['limitToItemsWithID']) && !in_array($vn_item_id, $pa_options['limitToItemsWithID'])) { continue; }
+			if (is_array($pa_options['omitItemsWithID']) && in_array($vn_item_id, $pa_options['omitItemsWithID'])) { continue; }
 			
 			$va_options[$va_item[$pa_options['key']]] = str_repeat('&nbsp;', intval($va_item['LEVEL']) * 3).' '.$va_item['name_singular'];
 			if (!$va_item['is_enabled']) { $va_disabled_options[$va_item[$pa_options['key']]] = true; }
@@ -1397,7 +1466,7 @@ class ca_lists extends BundlableLabelableBaseModelWithAttributes {
 			FROM ca_list_items
 			".join("\n", $va_joins)."
 			WHERE
-				(ca_list_items.list_id = ?)
+				(ca_list_items.deleted = 0) AND (ca_list_items.list_id = ?)
 				".(sizeof($va_sql_wheres) ? " AND ".join(' AND ', $va_sql_wheres) : "")."
 			GROUP BY
 				ca_list_items.item_id
@@ -1415,7 +1484,7 @@ class ca_lists extends BundlableLabelableBaseModelWithAttributes {
 			INNER JOIN ca_list_item_labels clil ON ca_list_item_labels.item_id = ca_list_items.item_id
 			".join("\n", $va_joins)."
 			WHERE
-				(ca_list_items.list_id = ?) AND (ca_list_item_labels.is_preferred = 1)
+				(ca_list_items.deleted = 0) AND (ca_list_items.list_id = ?) AND (ca_list_item_labels.is_preferred = 1)
 				".(sizeof($va_sql_wheres) ? " AND ".join(' AND ', $va_sql_wheres) : "")."
 				
 			GROUP BY
@@ -1514,7 +1583,7 @@ class ca_lists extends BundlableLabelableBaseModelWithAttributes {
 		$vn_item_id = null;
 		if ($vn_list_id = ca_lists::getListID($pm_list_name_or_id)) {
 			$o_db = new Db();
-			$qr_res = $o_db->query("SELECT item_id FROM ca_list_items WHERE list_id = ? AND idno = ?", (int)$vn_list_id, (string)$ps_idno);
+			$qr_res = $o_db->query("SELECT item_id FROM ca_list_items WHERE deleted = 0 AND list_id = ? AND idno = ?", (int)$vn_list_id, (string)$ps_idno);
 			
 			if ($qr_res->nextRow()) {
 				$vn_item_id = (int)$qr_res->get('item_id');

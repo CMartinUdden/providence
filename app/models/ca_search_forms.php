@@ -1009,7 +1009,8 @@ class ca_search_forms extends BundlableLabelableBaseModelWithAttributes {
 			$vs_display = $va_available_bundles[$va_placement['bundle_name']]['display'];
 			
 			if(is_array($va_placement['settings']['label'])){
-				if ($vs_user_set_label = array_shift(caExtractValuesByUserLocale(array($va_placement['settings']['label'])))) {
+				$va_tmp = caExtractValuesByUserLocale(array($va_placement['settings']['label']));
+				if ($vs_user_set_label = array_shift($va_tmp)) {
 					$vs_label = "{$vs_label} (<em>{$vs_user_set_label}</em>)";
 					$vs_display = "{$vs_display} (<em>{$vs_user_set_label}</em>)";
 				}
@@ -1294,8 +1295,7 @@ class ca_search_forms extends BundlableLabelableBaseModelWithAttributes {
 				}
 			}
 			
-			$t_locale = new ca_locales();
-			$va_locale_list = $t_locale->getLocaleList(array('index_by_code' => true));
+			$va_locale_list = ca_locales::getLocaleList(array('index_by_code' => true));
 			
 			$va_available_bundles = $t_form->getAvailableBundles();
 			foreach($va_bundles as $vn_i => $vs_bundle) {

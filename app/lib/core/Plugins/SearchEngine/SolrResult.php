@@ -63,6 +63,10 @@ class WLPlugSearchEngineSolrResult extends WLPlug implements IWLPlugSearchEngine
 		}
 	}
 	# -------------------------------------------------------
+	public function getHits() {
+		return $this->opa_hits;
+	}
+	# -------------------------------------------------------
 	public function numHits(){
 		return is_array($this->opa_hits) ? sizeof($this->opa_hits) : 0;
 	}
@@ -92,7 +96,9 @@ class WLPlugSearchEngineSolrResult extends WLPlug implements IWLPlugSearchEngine
 		
 		$vn_c = 0;
 		foreach($this->opa_hits as $vn_i => $va_row) {
-			$va_ids[] = $va_row[$this->ops_subject_primary_key];
+			$vs_val = array($va_row[$this->ops_subject_primary_key]);	// handle primary key as array (can happen in some broken configurations)
+			if (is_array($vs_val)) { $vs_val = array_pop($vs_val); }
+			$va_ids[] = $vs_val;
 			$vn_c++;
 			if (!is_null($vn_limit) && ($vn_c >= $vn_limit)) { break; }
 		}
@@ -108,3 +114,4 @@ class WLPlugSearchEngineSolrResult extends WLPlug implements IWLPlugSearchEngine
 	}
 	# -------------------------------------------------------
 }
+?>
