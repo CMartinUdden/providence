@@ -6206,31 +6206,31 @@ class BaseModel extends BaseObject {
 					$vs_order_by = $this->tableName().".".$this->primaryKey();
 				}
 			}
-			
+
 			if ($pb_return_child_counts) {
 				$vs_additional_child_join_conditions = sizeof($va_additional_child_join_conditions) ? " AND ".join(" AND ", $va_additional_child_join_conditions) : "";
 				$qr_hier = $o_db->query("
-					SELECT ".$this->tableName().".* ".(sizeof($va_additional_table_select_fields) ? ', '.join(', ', $va_additional_table_select_fields) : '').", count(*) child_count, p2.".$this->primaryKey()." has_children
-					FROM ".$this->tableName()."
-					{$vs_sql_joins}
-					LEFT JOIN ".$this->tableName()." AS p2 ON p2.".$vs_hier_parent_id_fld." = ".$this->tableName().".".$this->primaryKey()." {$vs_additional_child_join_conditions}
-					WHERE
+						SELECT ".$this->tableName().".* ".(sizeof($va_additional_table_select_fields) ? ', '.join(', ', $va_additional_table_select_fields) : '').", count(*) child_count, p2.".$this->primaryKey()." has_children
+						FROM ".$this->tableName()."
+						{$vs_sql_joins}
+						LEFT JOIN ".$this->tableName()." AS p2 ON p2.".$vs_hier_parent_id_fld." = ".$this->tableName().".".$this->primaryKey()." {$vs_additional_child_join_conditions}
+						WHERE
 						(".$this->tableName().".{$vs_hier_parent_id_fld} = ?) ".((sizeof($va_additional_table_wheres) > 0) ? ' AND '.join(' AND ', $va_additional_table_wheres) : '')."
-					GROUP BY
-						".$this->tableName().".".$this->primaryKey()." {$vs_additional_table_to_join_group_by}, {$vs_fields}
-					ORDER BY
+						GROUP BY
+						".$this->tableName().".".$this->primaryKey()." {$vs_additional_table_to_join_group_by}
+						ORDER BY
 						".$vs_order_by."
-				", (int)$pn_id);
+						", (int)$pn_id);
 			} else {
-				$vs_hier_sql = "
-					SELECT ".$this->tableName().".* ".(sizeof($va_additional_table_select_fields) ? ', '.join(', ', $va_additional_table_select_fields) : '')."
-					FROM ".$this->tableName()."
-					{$vs_sql_joins}
-					WHERE
+				$qr_hier = $o_db->query("
+						SELECT ".$this->tableName().".* ".(sizeof($va_additional_table_select_fields) ? ', '.join(', ', $va_additional_table_select_fields) : '')."
+						FROM ".$this->tableName()."
+						{$vs_sql_joins}
+						WHERE
 						(".$this->tableName().".{$vs_hier_parent_id_fld} = ?) ".((sizeof($va_additional_table_wheres) > 0) ? ' AND '.join(' AND ', $va_additional_table_wheres) : '')."
-					ORDER BY
+						ORDER BY
 						".$vs_order_by."
-				", (int)$pn_id);
+						", (int)$pn_id);
 			}
 			if ($o_db->numErrors()) {
 				$this->errors = array_merge($this->errors, $o_db->errors());
@@ -6242,7 +6242,7 @@ class BaseModel extends BaseObject {
 			return null;
 		}
 	}
-	# --------------------------------------------------------------------------------------------
+# --------------------------------------------------------------------------------------------
 	/**
 	 * Get *direct* child records for currently loaded record or one specified by $pn_id
 	 * Note that this only returns direct children, *NOT* children of children and further descendents
@@ -6263,12 +6263,12 @@ class BaseModel extends BaseObject {
 	 */
 	public function getHierarchyChildren($pn_id=null, $pa_options=null) {
 		$pb_ids_only = (isset($pa_options['idsOnly']) && $pa_options['idsOnly']) ? true : false;
-		
+
 		if (!$pn_id) { $pn_id = $this->getPrimaryKey(); }
 		if (!$pn_id) { return null; }
 		$qr_children = $this->getHierarchyChildrenAsQuery($pn_id, $pa_options);
-		
-		
+
+
 		$va_children = array();
 		$vs_pk = $this->primaryKey();
 		while($qr_children->nextRow()) {
@@ -6279,10 +6279,10 @@ class BaseModel extends BaseObject {
 				$va_children[] = $qr_children->getRow();
 			}
 		}
-		
+
 		return $va_children;
 	}
-	# --------------------------------------------------------------------------------------------
+# --------------------------------------------------------------------------------------------
 	/**
 	 * Get "siblings" records - records with the same parent - as the currently loaded record
 	 * or the record with its primary key = $pn_id
@@ -6302,10 +6302,10 @@ class BaseModel extends BaseObject {
 	 */
 	public function &getHierarchySiblings($pn_id=null, $pa_options=null) {
 		$pb_ids_only = (isset($pa_options['idsOnly']) && $pa_options['idsOnly']) ? true : false;
-		
+
 		if (!$pn_id) { $pn_id = $this->getPrimaryKey(); }
 		if (!$pn_id) { return null; }
-		
+
 		$vs_table_name = $this->tableName();
 		
 		$va_additional_table_wheres = array($this->primaryKey()." = ?");

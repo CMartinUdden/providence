@@ -1302,7 +1302,7 @@ class ca_commerce_orders extends BaseModel {
 	 		".($vb_join_transactions ? "INNER JOIN ca_commerce_transactions AS t ON t.transaction_id = o.transaction_id" : "")."
 	 		WHERE
 	 			o.deleted = 0 {$vs_sql_wheres}
-	 		GROUP BY o.".join(", o.", $o_db->getFieldNamesFromTable("ca_commerce_orders"))."
+	 		GROUP BY o.".join(", o.", $o_db->getFieldNamesFromTable("ca_commerce_orders")).", i.".join(", i.", $o_db->getFieldNamesFromTable("ca_commerce_order_items"))."
 	 		ORDER BY
 	 			o.created_on DESC
 	 			
