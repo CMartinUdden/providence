@@ -6208,38 +6208,38 @@ class BaseModel extends BaseObject {
 			}
 
 			if ($pb_return_child_counts) {
-				$vs_additional_child_join_conditions = sizeof($va_additional_child_join_conditions) ? " AND ".join(" AND ", $va_additional_child_join_conditions) : "";
-				$qr_hier = $o_db->query("
-						SELECT ".$this->tableName().".* ".(sizeof($va_additional_table_select_fields) ? ', '.join(', ', $va_additional_table_select_fields) : '').", count(*) child_count, p2.".$this->primaryKey()." has_children
-						FROM ".$this->tableName()."
-						{$vs_sql_joins}
-						LEFT JOIN ".$this->tableName()." AS p2 ON p2.".$vs_hier_parent_id_fld." = ".$this->tableName().".".$this->primaryKey()." {$vs_additional_child_join_conditions}
-						WHERE
-						(".$this->tableName().".{$vs_hier_parent_id_fld} = ?) ".((sizeof($va_additional_table_wheres) > 0) ? ' AND '.join(' AND ', $va_additional_table_wheres) : '')."
-						GROUP BY
-						".$this->tableName().".".$this->primaryKey()." {$vs_additional_table_to_join_group_by}
-						ORDER BY
-						".$vs_order_by."
-						", (int)$pn_id);
+					$vs_additional_child_join_conditions = sizeof($va_additional_child_join_conditions) ? " AND ".join(" AND ", $va_additional_child_join_conditions) : "";
+					$qr_hier = $o_db->query("
+									SELECT ".$this->tableName().".* ".(sizeof($va_additional_table_select_fields) ? ', '.join(', ', $va_additional_table_select_fields) : '').", count(*) child_count, p2.".$this->primaryKey()." has_children
+									FROM ".$this->tableName()."
+									{$vs_sql_joins}
+									LEFT JOIN ".$this->tableName()." AS p2 ON p2.".$vs_hier_parent_id_fld." = ".$this->tableName().".".$this->primaryKey()." {$vs_additional_child_join_conditions}
+									WHERE
+									(".$this->tableName().".{$vs_hier_parent_id_fld} = ?) ".((sizeof($va_additional_table_wheres) > 0) ? ' AND '.join(' AND ', $va_additional_table_wheres) : '')."
+									GROUP BY
+									".$this->tableName().".".$this->primaryKey()." {$vs_additional_table_to_join_group_by}
+									ORDER BY
+									".$vs_order_by."
+									", (int)$pn_id);
 			} else {
-				$qr_hier = $o_db->query("
-						SELECT ".$this->tableName().".* ".(sizeof($va_additional_table_select_fields) ? ', '.join(', ', $va_additional_table_select_fields) : '')."
-						FROM ".$this->tableName()."
-						{$vs_sql_joins}
-						WHERE
-						(".$this->tableName().".{$vs_hier_parent_id_fld} = ?) ".((sizeof($va_additional_table_wheres) > 0) ? ' AND '.join(' AND ', $va_additional_table_wheres) : '')."
-						ORDER BY
-						".$vs_order_by."
-						", (int)$pn_id);
+					$qr_hier = $o_db->query("
+									SELECT ".$this->tableName().".* ".(sizeof($va_additional_table_select_fields) ? ', '.join(', ', $va_additional_table_select_fields) : '')."
+									FROM ".$this->tableName()."
+									{$vs_sql_joins}
+									WHERE
+									(".$this->tableName().".{$vs_hier_parent_id_fld} = ?) ".((sizeof($va_additional_table_wheres) > 0) ? ' AND '.join(' AND ', $va_additional_table_wheres) : '')."
+									ORDER BY
+									".$vs_order_by."
+									", (int)$pn_id);
 			}
 			if ($o_db->numErrors()) {
-				$this->errors = array_merge($this->errors, $o_db->errors());
-				return null;
+					$this->errors = array_merge($this->errors, $o_db->errors());
+					return null;
 			} else {
-				return $qr_hier;
+					return $qr_hier;
 			}
 		} else {
-			return null;
+				return null;
 		}
 	}
 # --------------------------------------------------------------------------------------------
@@ -6262,6 +6262,7 @@ class BaseModel extends BaseObject {
 	 * @return array 
 	 */
 	public function getHierarchyChildren($pn_id=null, $pa_options=null) {
+<<<<<<< HEAD
 		$pb_ids_only = (isset($pa_options['idsOnly']) && $pa_options['idsOnly']) ? true : false;
 
 		if (!$pn_id) { $pn_id = $this->getPrimaryKey(); }
@@ -6281,6 +6282,27 @@ class BaseModel extends BaseObject {
 		}
 
 		return $va_children;
+=======
+			$pb_ids_only = (isset($pa_options['idsOnly']) && $pa_options['idsOnly']) ? true : false;
+
+			if (!$pn_id) { $pn_id = $this->getPrimaryKey(); }
+			if (!$pn_id) { return null; }
+			$qr_children = $this->getHierarchyChildrenAsQuery($pn_id, $pa_options);
+
+
+			$va_children = array();
+			$vs_pk = $this->primaryKey();
+			while($qr_children->nextRow()) {
+					if ($pb_ids_only) {
+							$va_row = $qr_children->getRow();
+							$va_children[] = $va_row[$vs_pk];
+					} else {
+							$va_children[] = $qr_children->getRow();
+					}
+			}
+
+			return $va_children;
+>>>>>>> cb5b6c068573899c04ba31563bbdfff7bf1f2892
 	}
 # --------------------------------------------------------------------------------------------
 	/**
@@ -6301,10 +6323,17 @@ class BaseModel extends BaseObject {
 	 * @return array 
 	 */
 	public function &getHierarchySiblings($pn_id=null, $pa_options=null) {
+<<<<<<< HEAD
 		$pb_ids_only = (isset($pa_options['idsOnly']) && $pa_options['idsOnly']) ? true : false;
 
 		if (!$pn_id) { $pn_id = $this->getPrimaryKey(); }
 		if (!$pn_id) { return null; }
+=======
+			$pb_ids_only = (isset($pa_options['idsOnly']) && $pa_options['idsOnly']) ? true : false;
+
+			if (!$pn_id) { $pn_id = $this->getPrimaryKey(); }
+			if (!$pn_id) { return null; }
+>>>>>>> cb5b6c068573899c04ba31563bbdfff7bf1f2892
 
 		$vs_table_name = $this->tableName();
 		
