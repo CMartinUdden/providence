@@ -6262,7 +6262,6 @@ class BaseModel extends BaseObject {
 	 * @return array 
 	 */
 	public function getHierarchyChildren($pn_id=null, $pa_options=null) {
-<<<<<<< HEAD
 		$pb_ids_only = (isset($pa_options['idsOnly']) && $pa_options['idsOnly']) ? true : false;
 
 		if (!$pn_id) { $pn_id = $this->getPrimaryKey(); }
@@ -6282,7 +6281,6 @@ class BaseModel extends BaseObject {
 		}
 
 		return $va_children;
-=======
 			$pb_ids_only = (isset($pa_options['idsOnly']) && $pa_options['idsOnly']) ? true : false;
 
 			if (!$pn_id) { $pn_id = $this->getPrimaryKey(); }
@@ -6302,7 +6300,6 @@ class BaseModel extends BaseObject {
 			}
 
 			return $va_children;
->>>>>>> cb5b6c068573899c04ba31563bbdfff7bf1f2892
 	}
 # --------------------------------------------------------------------------------------------
 	/**
@@ -6323,17 +6320,10 @@ class BaseModel extends BaseObject {
 	 * @return array 
 	 */
 	public function &getHierarchySiblings($pn_id=null, $pa_options=null) {
-<<<<<<< HEAD
-		$pb_ids_only = (isset($pa_options['idsOnly']) && $pa_options['idsOnly']) ? true : false;
-
-		if (!$pn_id) { $pn_id = $this->getPrimaryKey(); }
-		if (!$pn_id) { return null; }
-=======
 			$pb_ids_only = (isset($pa_options['idsOnly']) && $pa_options['idsOnly']) ? true : false;
 
 			if (!$pn_id) { $pn_id = $this->getPrimaryKey(); }
 			if (!$pn_id) { return null; }
->>>>>>> cb5b6c068573899c04ba31563bbdfff7bf1f2892
 
 		$vs_table_name = $this->tableName();
 		
